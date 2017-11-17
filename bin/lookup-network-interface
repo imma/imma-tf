@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+function main {
+  local nm_az="$1"; shift
+  local nm_network="$1"; shift
+
+  aqq --arg az "$nm_az" --arg name "$nm_network" '
+    $network_interfaces.NetworkInterfaces | map(select(.AvailabilityZone == $az and .TagSet.Name == $name)) | reduce .[] as $ele ({}; .[$ele.AvailabilityZone] = "\($ele.NetworkInterfaceId) \($ele.Association.PublicIp)")'
+}
+
+main "$@"
+
