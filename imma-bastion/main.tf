@@ -4,12 +4,12 @@ variable "env_efs_sg" {}
 variable "service_iam_role" {}
 
 resource "aws_security_group_rule" "zerotier_in" {
-  type                     = "ingress"
-  from_port                = 9993
-  to_port                  = 9993
-  protocol                 = "udp"
-  cidr_blocks = [ "0.0.0.0/0" ]
-  security_group_id        = "${var.service_sg}"
+  type              = "ingress"
+  from_port         = 9993
+  to_port           = 9993
+  protocol          = "udp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = "${var.service_sg}"
 }
 
 resource "aws_security_group_rule" "ping_everything" {
