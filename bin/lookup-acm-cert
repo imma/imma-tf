@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+function main {
+  local nm_region="$1"; shift
+  local id_acm="$1"; shift
+
+  aws "$nm_region" acm describe-certificate --certificate-arn "$id_acm" \
+    | jq -r '.Certificate.DomainValidationOptions[0].ResourceRecord | {validation_name: .Name, validation_value: .Value}'
+}
+
+main "$@"
+

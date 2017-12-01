@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+function main {
+  local nm_region="$1"; shift
+
+  aws "$nm_region" ec2 describe-vpc-peering-connections \
+    | jq -r '.VpcPeeringConnections | reduce .[] as $e ({}; . + {"\($e.AccepterVpcInfo.VpcId)_\($e.RequesterVpcInfo.VpcId)": $e.VpcPeeringConnectionId, "\($e.RequesterVpcInfo.VpcId)_\($e.AccepterVpcInfo.VpcId)": $e.VpcPeeringConnectionId})'
+}
+
+main "$@"
+
