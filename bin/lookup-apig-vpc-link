@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+function main {
+  local nm_region="$1"; shift
+  local nm_apig="$1"; shift
+
+  aws "$nm_region" apigateway get-vpc-links \
+    | jq --arg link_name "$nm_apig" -r '.items | map(select(.name == $link_name)) | map(.id) | .[]'
+}
+
+main "$@"
+
