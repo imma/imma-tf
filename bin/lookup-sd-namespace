@@ -4,8 +4,8 @@ function main {
   local nm_region="$1"; shift
   local nm_namespace="$1"; shift
 
-  aws "$nm_region" servicediscovery list-namespaces \
-    | jq -r --arg namespace "$nm_namespace" '(.Namespaces | map(select(.Name == $namespace)) | map(.Id) | .[] | { namespace_id: . }) // { namespace_id: "" }'
+  (aws "$nm_region" servicediscovery list-namespaces 2>/dev/null || echo '{}' )\
+    | jq -r --arg namespace "$nm_namespace" '(.Namespaces//[] | map(select(.Name == $namespace)) | map(.Id) | .[] | { namespace_id: . }) // { namespace_id: "" }'
 }
 
 main "$@"
