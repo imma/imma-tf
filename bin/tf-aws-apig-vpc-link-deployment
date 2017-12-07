@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+
+function lookup_id {
+  aws "$nm_region" apigateway get-deployments --rest-api-id "${arg1}" | jq --arg desc "${nm_resource}-${arg3}" '((.items | map(select(.description == $desc)) | map(.id) | .[]) // "") | {out1: ., out2: "", out3: "", out4: ""}'
+} 
+
+function main {
+  local nm_region="$1"; shift
+  local nm_resource_type="$1"; shift
+  local nm_action="$1"; shift
+
+  local nm_resource="$1"; shift
+  local arg1="${1#_}"; shift
+  local arg2="${1#_}"; shift
+  local arg3="${1#_}"; shift
+  local arg4="${1#_}"; shift
+  local out1="${1#_}"; shift
+  local out2="${1#_}"; shift
+  local out3="${1#_}"; shift
+  local out4="${1#_}"; shift
+
+  if [[ "$nm_action" != "lookup" ]]; then
+    local prev1="${1#_}"; shift
+    local prev2="${1#_}"; shift
+    local prev3="${1#_}"; shift
+    local prev4="${1#_}"; shift
+  fi
+
+  set -x
+  case "$nm_action" in
+    lookup)
+      lookup_id
+      ;;
+    create)
+      local id_resource="$(lookup_id| jq -r '.out1')"
+      if [[ -n "${id_resource}" ]]; then
+        return
+      fi
+
+      aws "$nm_region" apigateway create-deployment --rest-api-id "${arg1}" --stage-name "${arg2}" --description "${nm_resource}" --variables "vpcLinkId=${arg3}"
+      ;;
+    destroy)
+      return
+      ;;
+  esac
+}
+
+main "$@"
+

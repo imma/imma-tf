@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+
+function lookup_id {
+  local id_resource="$1"; shift
+  aws "$nm_region" apigateway get-vpc-links \
+    | jq --arg link_id "$id_resource" -r '(.items | map(select(.id == $link_id)) | map(.id) | .[]) // "" | {out1: ., out2: "", out3: "", out4: ""}'
+}
+
+function lookup_name {
+  aws "$nm_region" apigateway get-vpc-links \
+    | jq --arg link_name "$nm_resource" -r '(.items | map(select(.name == $link_name)) | map(.id) | .[]) // "" | {out1: ., out2: "", out3: "", out4: ""}'
+}
+
+function main {
+  local nm_region="$1"; shift
+  local nm_resource_type="$1"; shift
+  local nm_action="$1"; shift
+
+  local nm_resource="$1"; shift
+  local arg1="${1#_}"; shift
+  local arg2="${1#_}"; shift
+  local arg3="${1#_}"; shift
+  local arg4="${1#_}"; shift
+  local out1="${1#_}"; shift
+  local out2="${1#_}"; shift
+  local out3="${1#_}"; shift
+  local out4="${1#_}"; shift
+
+  if [[ "$nm_action" != "lookup" ]]; then
+    local prev1="${1#_}"; shift
+    local prev2="${1#_}"; shift
+    local prev3="${1#_}"; shift
+    local prev4="${1#_}"; shift
+  fi
+
+  case "$nm_action" in
+    lookup)
+      lookup_name
+      ;;
+    create)
+      local id_resource="$(lookup_name | jq -r '.out1')"
+      if [[ -n "${id_resource}" ]]; then
+        return
+      fi
+
+      aws "$nm_region" apigateway create-vpc-link --name "$nm_resource" --target-arns "$arg1" --endpoint-url "https://apigateway.${nm_region}.amazonaws.com" --region "${nm_region}"
+      id_resource="$(lookup_name | jq -r '.out1')"
+      while [[ "$(aws "$nm_region" apigateway get-vpc-link --vpc-link-id "$id_resource" | jq -r '.status')" == "PENDING" ]]; do
+        sleep 1
+      done
+      ;;
+    destroy)
+      if [[ -z "$prev1" ]]; then
+        return
+      fi
+
+      aws "${nm_region}" apigateway delete-vpc-link --vpc-link-id "$prev1"
+      while [[ -n "$(lookup_id "$prev1" | jq -r '.out1')" ]]; do
+        sleep 1
+      done
+      ;;
+  esac
+}
+
+main "$@"
+

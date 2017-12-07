@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+
+function lookup_id {
+  if aws "$nm_region" apigateway get-integration --rest-api-id "${arg1}" --resource-id "${arg2}" --http-method POST >/dev/null; then
+    jq -n --arg id "${arg1}-${arg2}" '{out1: $id, out2: "", out3: "", out4: ""}'
+  else
+    jq -n '{out1: "", out2: "", out3: "", out4: ""}'
+  fi
+}
+
+function main {
+  local nm_region="$1"; shift
+  local nm_resource_type="$1"; shift
+  local nm_action="$1"; shift
+
+  local nm_resource="$1"; shift
+  local arg1="${1#_}"; shift
+  local arg2="${1#_}"; shift
+  local arg3="${1#_}"; shift
+  local arg4="${1#_}"; shift
+  local out1="${1#_}"; shift
+  local out2="${1#_}"; shift
+  local out3="${1#_}"; shift
+  local out4="${1#_}"; shift
+
+  if [[ "$nm_action" != "lookup" ]]; then
+    local prev1="${1#_}"; shift
+    local prev2="${1#_}"; shift
+    local prev3="${1#_}"; shift
+    local prev4="${1#_}"; shift
+  fi
+
+  set -x
+  case "$nm_action" in
+    lookup)
+      lookup_id
+      ;;
+    create)
+      local id_resource="$(lookup_id | jq -r '.out1')"
+      if [[ -n "${id_resource}" ]]; then
+        return
+      fi
+
+      aws "$nm_region" apigateway put-integration --rest-api-id "${arg1}" --resource-id "${arg2}" --http-method POST --uri "${arg3}" --type HTTP_PROXY --integration-http-method POST --connection-type VPC_LINK --connection-id '${stageVariables.vpcLinkId}'
+      ;;
+    destroy)
+      aws "$nm_region" apigateway delete-integration --rest-api-id "${arg1}" --resource-id "${arg2}" --http-method POST || true
+      ;;
+  esac
+}
+
+main "$@"
+
