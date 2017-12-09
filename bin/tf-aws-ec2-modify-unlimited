@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+function main {
+  local nm_region="$1"; shift
+  local nm_resource_type="$1"; shift
+  local nm_action="$1"; shift
+
+  local nm_resource="$1"; shift
+  local arg1="${1#_}"; shift
+  local arg2="${1#_}"; shift
+  local arg3="${1#_}"; shift
+  local arg4="${1#_}"; shift
+  local out1="${1#_}"; shift
+  local out2="${1#_}"; shift
+  local out3="${1#_}"; shift
+  local out4="${1#_}"; shift
+
+  if [[ "$nm_action" != "lookup" ]]; then
+    local prev1="${1#_}"; shift
+    local prev2="${1#_}"; shift
+    local prev3="${1#_}"; shift
+    local prev4="${1#_}"; shift
+  fi
+
+  case "$nm_action" in
+    lookup)
+      jq -n '{out1: "", out2: "", out3: "", out4: ""}'
+      ;;
+    create)
+      for a in $nm_resource; do
+        aws "$nm_region" ec2 modify-instance-credit-specification \
+          --instance-credit-specification "$(jq -n --arg instance "$a" '[{InstanceId: $instance, CpuCredits: "unlimited"}]')"
+      done
+      ;;
+    destroy)
+      true
+      ;;
+  esac
+}
+
+main "$@"
+
