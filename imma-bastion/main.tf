@@ -21,6 +21,15 @@ resource "aws_security_group_rule" "ping_everything" {
   security_group_id        = "${var.env_sg}"
 }
 
+resource "aws_security_group_rule" "into_everything" {
+  type                     = "ingress"
+  from_port                = 0
+  to_port                  = 65535
+  protocol                 = "tcp"
+  source_security_group_id = "${var.service_sg}"
+  security_group_id        = "${var.env_sg}"
+}
+
 resource "aws_security_group_rule" "ssh_into_everything" {
   type                     = "ingress"
   from_port                = 22
