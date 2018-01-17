@@ -48,6 +48,15 @@ resource "aws_security_group_rule" "efs_mount" {
   security_group_id        = "${var.env_efs_sg}"
 }
 
+resource "aws_security_group_rule" "efs_mount_env" {
+  type                     = "ingress"
+  from_port                = 2049
+  to_port                  = 2049
+  protocol                 = "tcp"
+  source_security_group_id = "${var.env_sg}"
+  security_group_id        = "${var.env_efs_sg}"
+}
+
 resource "aws_iam_role_policy_attachment" "administrator_ro" {
   role       = "${var.service_iam_role}"
   policy_arn = "arn:aws:iam::aws:policy/ReadOnlyAccess"
