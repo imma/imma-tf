@@ -21,7 +21,7 @@ resource "aws_security_group_rule" "into_everything" {
   security_group_id        = "${var.env_sg}"
 }
 
-resource "aws_security_group_rule" "ssh_from_publilc" {
+resource "aws_security_group_rule" "ssh_from_public" {
   type              = "ingress"
   from_port         = 22
   to_port           = 22
@@ -29,6 +29,7 @@ resource "aws_security_group_rule" "ssh_from_publilc" {
   cidr_blocks       = ["0.0.0.0/0"]
   ipv6_cidr_blocks  = ["::/0"]
   security_group_id = "${var.service_sg}"
+  count             = 0
 }
 
 resource "aws_security_group_rule" "ssh_into_everything" {
