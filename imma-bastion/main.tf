@@ -22,22 +22,22 @@ resource "aws_security_group_rule" "into_everything" {
 }
 
 resource "aws_security_group_rule" "ssh_from_publilc" {
-  type                     = "ingress"
-  from_port                = 22
-  to_port                  = 22
-  protocol                 = "tcp"
-  source_security_group_id = "${var.service_sg}"
-  security_group_id        = "${var.service_sg}"
-}
-
-resource "aws_security_group_rule" "ssh_into_everything" {
   type              = "ingress"
   from_port         = 22
   to_port           = 22
   protocol          = "tcp"
   cidr_blocks       = ["0.0.0.0/0"]
   ipv6_cidr_blocks  = ["::/0"]
-  security_group_id = "${var.env_sg}"
+  security_group_id = "${var.service_sg}"
+}
+
+resource "aws_security_group_rule" "ssh_into_everything" {
+  type                     = "ingress"
+  from_port                = 22
+  to_port                  = 22
+  protocol                 = "tcp"
+  source_security_group_id = "${var.service_sg}"
+  security_group_id        = "${var.env_sg}"
 }
 
 resource "aws_security_group_rule" "efs_mount" {
