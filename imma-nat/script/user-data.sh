@@ -17,6 +17,9 @@ swap:
   size: 4294967296
   maxsize: 4294967296
 
+bootcmd:
+  - "echo 'service network restart' >> /etc/rc.local"
+
 --===============88888888888888888888888888==
 MIME-Version: 1.0
 Content-Type: text/x-shellscript; charset="us-ascii"
