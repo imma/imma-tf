@@ -1,4 +1,120 @@
+From nobody Wed Aug 10 18:58:26 2016
+Content-Type: multipart/mixed; boundary="===============88888888888888888888888888=="
+MIME-Version: 1.0
+Number-Attachments: 1
+
+--===============88888888888888888888888888==
+MIME-Version: 1.0
+Content-Type: text/cloud-config; charset="us-ascii"
+
+power_state:
+  mode: reboot
+  message: Rebooting after initial cloud-init
+  condition: True
+
+swap:
+  filename: /root/swap0
+  size: 4294967296
+  maxsize: 4294967296
+
+--===============88888888888888888888888888==
+MIME-Version: 1.0
+Content-Type: text/x-shellscript; charset="us-ascii"
+
 #!/bin/bash
+
+exec 1>~/stdout.log
+exec 2>~/stderr.log
+
+date
+uname -a
+
+yum update
+yum upgrade -y
+yum install -y ruby wget nfs-utils git jq vim
+
+if ! id ubuntu 2>/dev/null; then
+  groupadd -g 1000 ubuntu
+  useradd -m -s /bin/bash -g ubuntu -u 1000 ubuntu
+  mkdir ~ubuntu/.ssh
+  mv ~ec2-user/.ssh/authorized_keys ~ubuntu/.ssh/
+  chown -R ubuntu:ubuntu ~ubuntu
+  echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' | tee -a /etc/sudoers.d/cloud-init
+fi
+
+cat <<EOF | gpg --import
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: SKS 1.1.6
+Comment: Hostname: pgp.mit.edu
+
+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
+=JgAv
+-----END PGP PUBLIC KEY BLOCK-----
+EOF
+
+if z=$(curl -s 'https://install.zerotier.com/' | gpg); then 
+	echo "$z" | bash 1>~/zerotier.log 2>&1
+fi
+
+while ! zerotier-cli info | grep ONLINE; do
+  date
+  sleep 5
+done
+
+zerotier-cli join ${zerotier_network}
+
+while true; do
+  ipv6="$(ifconfig zt0 | grep 'inet6' | grep Scope:Global | awk '{print $3}' | cut -b1-12)"
+  if [[ "$(echo "$ipv6" | wc -c)" == 13 ]]; then
+    break
+  fi
+  date
+  sleep 5
+done
+
+mkdir -p /data
+echo "efs.${env}.immanent.io:/ /data nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 0 0" >> /etc/fstab
 
 echo 'IyEvdXNyL2Jpbi9lbnYgYmFzaAoKaWYgW1sgIiQxIiAhPSAiZXRoMSIgXV07IHRoZW4gZXhpdCAwOyBmaQoKZnVuY3Rpb24gbWFzazJjZHIgewogICMgQXNzdW1lcyB0aGVyZSdzIG5vICIyNTUuIiBhZnRlciBhIG5vbi0yNTUgYnl0ZSBpbiB0aGUgbWFzawogIGxvY2FsIHg9JHsxIyMqMjU1Ln0KICBzZXQgLS0gMF5eXjEyOF4xOTJeMjI0XjI0MF4yNDheMjUyXjI1NF4gJCgoICgkeyMxfSAtICR7I3h9KSoyICkpICR7eCUlLip9CiAgeD0kezElJSQzKn0KICBlY2hvICQoKCAkMiArICgkeyN4fS80KSApKQp9CgpmdW5jdGlvbiBtYWluIHsKICBTVUJORVRfQ0lEUj0iJChuZXRzdGF0IC1ybiB8IGF3ayAnJE5GID09ICJldGgwIiAmJiAkNCA9PSAiVSIgeyBwcmludCAkMSB9JykvJChtYXNrMmNkciAiJChuZXRzdGF0IC1ybiB8IGF3ayAnJE5GID09ICJldGgwIiAmJiAkNCA9PSAiVSIgeyBwcmludCAkMSB9JykiKSIKICBJUF9HQVRFV0FZPSIkKGJhc2ggLWMgJ2VjaG8gJDEgJDIgJDMgJCgoICQ0ICsgMSApKScgJycgJChuZXRzdGF0IC1ybiB8IGF3ayAnJE5GID09ICJldGgwIiAmJiAkNCA9PSAiVSIgeyBwcmludCAkMSB9JyB8IHNlZCAncyNcLiMgI2cnKSB8IHNlZCAncyMgIy4jZycpIgogIElQX0FERFJFU1M9IiQoaWZjb25maWcgZXRoMCB8IGF3ayAnTlIgPT0gMiB7cHJpbnQgJDJ9JyB8IGN1dCAtZDogLWYyKSIKICBlY2hvIDEgcnQyID4+ICAvZXRjL2lwcm91dGUyL3J0X3RhYmxlcwoKICBpcCByb3V0ZSBhZGQgJHtTVUJORVRfQ0lEUn0gZGV2IGV0aDAgc3JjICR7SVBfQUREUkVTU30gdGFibGUgcnQyCiAgaXAgcm91dGUgYWRkIGRlZmF1bHQgdmlhICR7SVBfR0FURVdBWX0gZGV2IGV0aDAgdGFibGUgcnQyCgogIGlwIHJ1bGUgYWRkIGZyb20gJHtJUF9BRERSRVNTfS8zMiB0YWJsZSBydDIKICBpcCBydWxlIGFkZCB0byAke0lQX0FERFJFU1N9LzMyIHRhYmxlIHJ0MgoKICBzeXNjdGwgLXEgLXcgbmV0LmlwdjQuaXBfZm9yd2FyZD0xIG5ldC5pcHY0LmNvbmYuZXRoMS5zZW5kX3JlZGlyZWN0cz0wIG5ldC5pcHY0LmNvbmYuZXRoMC5zZW5kX3JlZGlyZWN0cz0xCgogIGlwdGFibGVzIC10IG5hdCAtRCBQT1NUUk9VVElORyAtbyBldGgwIC1qIE1BU1FVRVJBREUKICBpcHRhYmxlcyAtdCBuYXQgLUMgUE9TVFJPVVRJTkcgLW8gZXRoMSAtaiBNQVNRVUVSQURFIHx8IGlwdGFibGVzIC10IG5hdCAtQSBQT1NUUk9VVElORyAtbyBldGgxIC1qIE1BU1FVRVJBREUKCiAgaXAgcm91dGUgZGVsIGRlZmF1bHQgdmlhICR7SVBfR0FURVdBWX0KfQoKbWFpbiAiJEAiCg==' \
   | base64 -d > /sbin/ifup-local
@@ -7,3 +123,5 @@ chmod 755 /sbin/ifup-local
 if ifconfig eth1; then
   /sbin/ifup-local eth1
 fi
+
+--===============88888888888888888888888888==
