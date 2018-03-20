@@ -4,8 +4,12 @@ function main {
   local nm_region="$1"; shift
   local nm_domain="$1"; shift
 
-  aws "$nm_region" apigateway get-domain-name  --domain-name "$nm_domain" \
-    | jq '{regionalHostedZoneId: .regionalHostedZoneId, regionalDomainName: .regionalDomainName}'
+  {
+    aws "$nm_region" apigateway get-domain-name  --domain-name "$nm_domain" 2>/dev/null \
+      | jq '{regionalHostedZoneId: .regionalHostedZoneId, regionalDomainName: .regionalDomainName}'
+    jq -n '{regionalHostedZoneId: "", regionalDomainName: ""}'
+  } | jq -s '.[0]'
+
 }
 
 main "$@"
