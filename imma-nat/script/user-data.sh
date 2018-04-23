@@ -130,47 +130,47 @@ done
 mkdir -p /data
 echo "efs.${env}.immanent.io:/ /data nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 0 0" >> /etc/fstab
 
-if type -P docker; then
-  usermod -G docker ubuntu
+bash <(curl -Ss https://my-netdata.io/kickstart-static64.sh) --dont-wait --dont-start-it
 
-  mkdir -p /etc/docker
-  pth_public='/var/lib/zerotier-one/identity.public'
-  jq -n --arg ipv6 "$(echo "$${ipv6}$(cut -c 1-2 $pth_public):$(cut -c 3-6 $pth_public):$(cut -c 7-10 $pth_public)::/80")" \
-    '{bip: "192.168.250.1/24", ipv6: true, "fixed-cidr-v6": $ipv6}' > /etc/docker/daemon.json
-
-  cat >> /etc/ecs/ecs.config <<EOF
-  ECS_CLUSTER=${env}-${app}-${service}
-  EOF
-
-  nm_region="$(curl --silent http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r .region)"
-
-  wget "https://aws-codedeploy-$${nm_region}.s3.amazonaws.com/latest/install"
-  chmod 755 install
-  ./install auto
-  rm -f install
-
-  yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
-
-  yum install -y awslogs
-  chkconfig awslogs on
-
-  stop ecs
-  service docker stop
-
-  dmsetup remove_all
-  lvremove docker/docker-pool
-
-  lvcreate -n overlay -l '100%VG' docker
-  mkfs -t ext4 -L docker -i 4096 -F /dev/docker/overlay
-
-  rm -rf /var/lib/docker/*
-  mkdir -p /var/lib/docker/overlay
-  mount /dev/docker/overlay /var/lib/docker
-
-  echo 'DOCKER_STORAGE_OPTIONS="--storage-driver overlay2"' > /etc/sysconfig/docker-storage
-
-  rm -rf /var/lib/ecs/data/* /var/cache/ecs/*
-
-  echo "/dev/docker/overlay /var/lib/docker auto defaults 0 0" >> /etc/fstab
+if ! type -P docker; then
+  exit 0
 fi
+
+usermod -G docker ubuntu
+
+mkdir -p /etc/docker
+pth_public='/var/lib/zerotier-one/identity.public'
+jq -n --arg ipv6 "$(echo "$${ipv6}$(cut -c 1-2 $pth_public):$(cut -c 3-6 $pth_public):$(cut -c 7-10 $pth_public)::/80")" \
+  '{bip: "192.168.250.1/24", ipv6: true, "ip-forward": false, "fixed-cidr-v6": $ipv6}' > /etc/docker/daemon.json
+
+cat >> /etc/ecs/ecs.config <<EOF
+ECS_CLUSTER=${env}-${app}-${service}
+EOF
+
+nm_region="$(curl --silent http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r .region)"
+
+yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
+
+yum install -y awslogs
+chkconfig awslogs on
+
+stop ecs
+service docker stop
+
+dmsetup remove_all
+lvremove docker/docker-pool
+
+lvcreate -n overlay -l '100%VG' docker
+mkfs -t ext4 -L docker -i 4096 -F /dev/docker/overlay
+
+rm -rf /var/lib/docker/*
+mkdir -p /var/lib/docker/overlay
+mount /dev/docker/overlay /var/lib/docker
+
+echo 'DOCKER_STORAGE_OPTIONS="--storage-driver overlay2"' > /etc/sysconfig/docker-storage
+
+rm -rf /var/lib/ecs/data/* /var/cache/ecs/*
+
+echo "/dev/docker/overlay /var/lib/docker auto defaults 0 0" >> /etc/fstab
+
 --===============88888888888888888888888888==
