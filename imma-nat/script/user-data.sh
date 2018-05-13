@@ -45,7 +45,7 @@ done
 
 yum update
 yum upgrade -y
-yum install -y ruby wget nfs-utils git jq vim
+yum install -y ruby wget curl nc jq git vim nfs-utils amazon-efs-utils
 
 if ! id ubuntu 2>/dev/null; then
   groupadd -g 1000 ubuntu
@@ -55,6 +55,11 @@ if ! id ubuntu 2>/dev/null; then
   chown -R ubuntu:ubuntu ~ubuntu
   echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' | tee -a /etc/sudoers.d/cloud-init
 fi
+
+usermod -G docker ubuntu
+
+bash <(curl -Ss https://my-netdata.io/kickstart-static64.sh) --dont-wait --dont-start-it
+bash <(curl -Ss https://s3.amazonaws.com/download.draios.com/stable/install-sysdig)
 
 cat <<EOF | gpg --import
 -----BEGIN PGP PUBLIC KEY BLOCK-----
@@ -119,7 +124,7 @@ done
 zerotier-cli join ${zerotier_network}
 
 while true; do
-  ipv6="$(ifconfig zt0 | grep 'inet6' | grep Scope:Global | awk '{print $3}' | cut -b1-12)"
+  ipv6="$(ifconfig -a | grep fca2:d4af:f4 | awk '{print $3}' | cut -b1-12)"
   if [[ "$(echo "$ipv6" | wc -c)" == 13 ]]; then
     break
   fi
@@ -127,29 +132,26 @@ while true; do
   sleep 5
 done
 
-mkdir -p /data
+install -d -o ubuntu -g ubuntu /data
 echo "efs.${env}.immanent.io:/ /data nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 0 0" >> /etc/fstab
 
-bash <(curl -Ss https://my-netdata.io/kickstart-static64.sh) --dont-wait --dont-start-it
-
-if ! type -P docker; then
-  exit 0
-fi
-
-usermod -G docker ubuntu
+DOCKER_COMPOSE_VERSION='1.21.2'
+mkdir -p /usr/local/bin
+curl -L -s -o /usr/local/bin/docker-compose "https://github.com/docker/compose/releases/download/$${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)"
+chmod +x /usr/local/bin/docker-compose
 
 mkdir -p /etc/docker
 pth_public='/var/lib/zerotier-one/identity.public'
 jq -n --arg ipv6 "$(echo "$${ipv6}$(cut -c 1-2 $pth_public):$(cut -c 3-6 $pth_public):$(cut -c 7-10 $pth_public)::/80")" \
   '{bip: "192.168.250.1/24", ipv6: true, "ip-forward": false, "fixed-cidr-v6": $ipv6}' > /etc/docker/daemon.json
 
+if ! type -P docker; then
+  exit 0
+fi
+
 cat >> /etc/ecs/ecs.config <<EOF
 ECS_CLUSTER=${env}-${app}-${service}
 EOF
-
-nm_region="$(curl --silent http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r .region)"
-
-yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
 
 yum install -y awslogs
 chkconfig awslogs on
