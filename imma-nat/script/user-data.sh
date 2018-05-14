@@ -24,7 +24,7 @@ bootcmd:
 MIME-Version: 1.0
 Content-Type: text/x-shellscript; charset="us-ascii"
 
-#!/bin/bash
+#!/usr/bin/env bash
 
 exec 1>~/stdout.log
 exec 2>~/stderr.log
@@ -56,6 +56,7 @@ if ! id ubuntu 2>/dev/null; then
   echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' | tee -a /etc/sudoers.d/cloud-init
 fi
 
+groupadd -g 497 docker
 usermod -G docker ubuntu
 
 bash <(curl -Ss https://my-netdata.io/kickstart-static64.sh) --dont-wait --dont-start-it
@@ -133,7 +134,6 @@ while true; do
 done
 
 install -d -o ubuntu -g ubuntu /data
-echo "efs.${env}.immanent.io:/ /data nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 0 0" >> /etc/fstab
 
 DOCKER_COMPOSE_VERSION='1.21.2'
 mkdir -p /usr/local/bin
@@ -145,9 +145,13 @@ pth_public='/var/lib/zerotier-one/identity.public'
 jq -n --arg ipv6 "$(echo "$${ipv6}$(cut -c 1-2 $pth_public):$(cut -c 3-6 $pth_public):$(cut -c 7-10 $pth_public)::/80")" \
   '{bip: "192.168.250.1/24", ipv6: true, "ip-forward": false, "fixed-cidr-v6": $ipv6}' > /etc/docker/daemon.json
 
-if ! type -P docker; then
-  exit 0
-fi
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+apt-get update
+apt-get install -y docker-ce
+aptitude hold docker-ce grub-pc-bin
+
+echo "efs.${env}.immanent.io:/ /data nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 0 0" >> /etc/fstab
 
 cat >> /etc/ecs/ecs.config <<EOF
 ECS_CLUSTER=${env}-${app}-${service}
