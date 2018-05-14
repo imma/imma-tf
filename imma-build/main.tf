@@ -10,4 +10,5 @@ resource "aws_security_group_rule" "efs_mount" {
   protocol                 = "tcp"
   source_security_group_id = "${var.service_sg}"
   security_group_id        = "${var.env_efs_sg}"
+  description              = "build can mount env efs"
 }

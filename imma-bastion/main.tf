@@ -10,6 +10,7 @@ resource "aws_security_group_rule" "ping_everything" {
   protocol                 = "icmp"
   source_security_group_id = "${var.service_sg}"
   security_group_id        = "${var.env_sg}"
+  description              = "bastion can ping everything"
 }
 
 resource "aws_security_group_rule" "into_everything" {
@@ -19,26 +20,7 @@ resource "aws_security_group_rule" "into_everything" {
   protocol                 = "tcp"
   source_security_group_id = "${var.service_sg}"
   security_group_id        = "${var.env_sg}"
-}
-
-resource "aws_security_group_rule" "ssh_from_public" {
-  type              = "ingress"
-  from_port         = 22
-  to_port           = 22
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
-  ipv6_cidr_blocks  = ["::/0"]
-  security_group_id = "${var.service_sg}"
-  count             = 0
-}
-
-resource "aws_security_group_rule" "ssh_into_everything" {
-  type                     = "ingress"
-  from_port                = 22
-  to_port                  = 22
-  protocol                 = "tcp"
-  source_security_group_id = "${var.service_sg}"
-  security_group_id        = "${var.env_sg}"
+  description              = "bastion can tcp into everything"
 }
 
 resource "aws_security_group_rule" "efs_mount" {
@@ -48,6 +30,7 @@ resource "aws_security_group_rule" "efs_mount" {
   protocol                 = "tcp"
   source_security_group_id = "${var.service_sg}"
   security_group_id        = "${var.env_efs_sg}"
+  description              = "bastion can mount env efs"
 }
 
 resource "aws_security_group_rule" "efs_mount_env" {
@@ -57,6 +40,7 @@ resource "aws_security_group_rule" "efs_mount_env" {
   protocol                 = "tcp"
   source_security_group_id = "${var.env_sg}"
   security_group_id        = "${var.env_efs_sg}"
+  description              = "env can mount env efs"
 }
 
 resource "aws_iam_role_policy_attachment" "administrator_ro" {

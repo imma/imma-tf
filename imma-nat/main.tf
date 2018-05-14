@@ -10,6 +10,7 @@ resource "aws_security_group_rule" "ping_everything" {
   protocol                 = "icmp"
   source_security_group_id = "${var.service_sg}"
   security_group_id        = "${var.env_sg}"
+  description              = "nat can ping everything"
 }
 
 resource "aws_security_group_rule" "ssh_into_everything" {
@@ -19,4 +20,5 @@ resource "aws_security_group_rule" "ssh_into_everything" {
   protocol                 = "tcp"
   source_security_group_id = "${var.service_sg}"
   security_group_id        = "${var.env_sg}"
+  description              = "nat can ssh to everything"
 }
